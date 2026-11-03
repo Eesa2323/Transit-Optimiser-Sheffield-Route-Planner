@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sheffield Route Planner - Algorithm Visualiser</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; color: #1f2933; }
+    aside { width: 320px; flex: none; padding: 16px; overflow-y: auto; background: #f5f7fa; border-right: 1px solid #d9e2ec; }
+    h1 { font-size: 1.2rem; margin: 0 0 4px; }
+    h3 { margin: 14px 0 6px; font-size: .95rem; }
+    .sub { color: #616e7c; margin: 0 0 12px; font-size: .82rem; }
+    label { display: block; font-weight: 600; font-size: .82rem; margin: 10px 0 4px; }
+    select, button { width: 100%; padding: 8px; font-size: .9rem; border-radius: 6px; border: 1px solid #9aa5b1; }
+    button { background: #0b69a3; color: #fff; border: 0; cursor: pointer; font-weight: 600; }
+    button:hover { background: #095480; }
+    button.secondary { background: #fff; color: #0b69a3; border: 1px solid #0b69a3; }
+    .mt { margin-top: 10px; }
+    #result { margin-top: 14px; font-size: .88rem; }
+    .error { color: #b42318; background: #fee4e2; padding: 10px; border-radius: 6px; }
+    .total { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+    ol { padding-left: 20px; margin: 6px 0; } li { margin: 3px 0; }
+    .leg { color: #616e7c; font-size: .78rem; }
+    .transfer { background: #fff4d6; padding: 6px 8px; border-radius: 6px; margin: 6px 0; }
+    main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    #map { flex: 1; min-height: 200px; }
+    #panel { height: 340px; border-top: 2px solid #d9e2ec; display: flex; flex-direction: column; background: #fff; }
+    .tabs { display: flex; background: #f5f7fa; border-bottom: 1px solid #d9e2ec; }
+    .tabs button { width: auto; border-radius: 0; background: transparent; color: #3e4c59; border: 0; padding: 9px 14px; }
+    .tabs button.active { background: #fff; color: #0b69a3; box-shadow: inset 0 -3px #0b69a3; }
+    .tab { flex: 1; overflow: auto; padding: 12px; display: none; font-size: .85rem; }
+    .tab.active { display: block; }
+    .controls { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .controls button { width: auto; padding: 6px 12px; }
+    .controls input[type=range] { flex: 1; }
+    .msg { background: #e6f1fa; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; min-height: 36px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .chip { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 12px; background: #e4e7eb; font-size: .78rem; }
+    .chip.head { background: #fbbf24; font-weight: 700; }
+    table { border-collapse: collapse; width: 100%; } th, td { border-bottom: 1px solid #e4e7eb; padding: 4px 8px; text-align: left; }
+    th { background: #f5f7fa; position: sticky; top: 0; }
+    tr.best td { background: #e3f9e5; font-weight: 600; }
+    .legend span { display: inline-block; margin-right: 12px; } .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; border: 1px solid #333; }
+    code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+    details { margin: 4px 0; } summary { cursor: pointer; }
+    .trace-row { padding: 2px 6px; border-left: 3px solid #cbd2d9; margin: 2px 0; cursor: pointer; }
+    .trace-row.cur { background: #fff4d6; }
+    .t-visit { border-color: #2da44e; } .t-relax { border-color: #1f6feb; } .t-found, .t-accept { border-color: #d4a017; }
+    .t-stale, .t-skip, .t-no-improve { border-color: #cf222e; }
+    .tabs { overflow-x: auto; }
+    .tabs button { white-space: nowrap; flex: none; }
+    @media (max-width: 800px) {
+      body { flex-direction: column; height: auto; }
+      aside { width: 100%; border-right: 0; border-bottom: 1px solid #d9e2ec; }
+      main { height: auto; }
+      #map { flex: none; height: 55vh; min-height: 320px; }
+      #panel { height: auto; max-height: none; }
+      .tab { max-height: 70vh; }
+      .grid { grid-template-columns: 1fr; }
+    }
+    .help-btn { margin-top: 10px; }
+    #welcome { position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; background: rgba(16, 42, 67, .6); padding: 16px; }
+    #welcome.open { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 100%; max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+    .modal header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e4e7eb; }
+    .modal header h2 { margin: 0; font-size: 1.25rem; }
+    .modal .close { width: 40px; height: 40px; padding: 0; font-size: 1.4rem; line-height: 1; background: #f0f4f8; color: #243b53; border: 0; border-radius: 50%; flex: none; }
+    .modal .body { padding: 16px 20px; overflow-y: auto; font-size: .95rem; line-height: 1.55; }
+    .modal .body h3 { margin: 18px 0 6px; font-size: 1rem; }
+    .modal .body p { margin: 6px 0; }
+    .modal .body ul { margin: 6px 0; padding-left: 20px; }
+    .modal footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid #e4e7eb; }
+    .modal footer label { margin: 0; font-weight: 400; display: flex; gap: 6px; align-items: center; }
+    .modal footer button { width: auto; padding: 10px 22px; }
+    @media (max-width: 800px) {
+      #welcome { padding: 0; }
+      .modal { max-width: none; height: 100%; max-height: none; border-radius: 0; }
+      .modal footer button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>Sheffield Route Planner</h1>
+    <p class="sub">Compare graph algorithms and watch their data structures work, step by step.</p>
+    <label for="from">From</label><select id="from"></select>
+    <label for="to">To</label><select id="to"></select>
+    <label for="algo">Algorithm</label><select id="algo"></select>
+    <button id="plan" class="mt">Plan route &amp; trace</button>
+    <button id="swap" type="button" class="secondary mt">Swap stations</button>
+    <button id="helpBtn" type="button" class="secondary help-btn">How does this work?</button>
+    <div id="algoInfo" class="sub mt"></div>
+    <div id="result" aria-live="polite"></div>
+  </aside>
+  <main>
+    <div id="map"></div>
+    <section id="panel">
+      <div class="tabs" role="tablist">
+        <button data-tab="trace" class="active">Step-through trace</button>
+        <button data-tab="compare">Compare algorithms</button>
+        <button data-tab="structures">Graph &amp; data structures</button>
+        <button data-tab="mst">Spanning tree (Kruskal)</button>
+      </div>
+      <div id="tab-trace" class="tab active"></div>
+      <div id="tab-compare" class="tab"></div>
+      <div id="tab-structures" class="tab"></div>
+      <div id="tab-mst" class="tab"></div>
+    </section>
+  </main>
+
+  <div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="modal">
+      <header>
+        <h2 id="welcomeTitle">Welcome to the Sheffield Route Planner</h2>
+        <button type="button" class="close" id="closeX" aria-label="Close">&times;</button>
+      </header>
+      <div class="body">
+        <p>This app finds the quickest way between two places in Sheffield using trams and walking links. It also lets you <strong>watch how the computer works out the answer</strong>, one step at a time.</p>
+
+        <h3>1. Plan a route</h3>
+        <ul>
+          <li>Pick a <strong>From</strong> and a <strong>To</strong> station on the left (or at the top on a phone).</li>
+          <li>Choose an <strong>Algorithm</strong>. Each one is a different method of searching.</li>
+          <li>Press <strong>Plan route &amp; trace</strong>. Your route is drawn on the map, with the total time, each leg, and where to change lines.</li>
+          <li><strong>Swap stations</strong> flips your journey around.</li>
+        </ul>
+
+        <h3>2. The four algorithms</h3>
+        <ul>
+          <li><strong>Dijkstra</strong> always explores the closest unvisited station next. It is guaranteed to find the fastest route.</li>
+          <li><strong>A*</strong> works like Dijkstra but also uses the straight-line distance to the destination, so it usually checks fewer stations.</li>
+          <li><strong>Breadth-first search</strong> finds the route with the fewest stops, even if it is not the quickest in minutes.</li>
+          <li><strong>Bellman-Ford</strong> keeps re-checking every connection until nothing can be improved. It is slower but very thorough.</li>
+        </ul>
+
+        <h3>3. The tabs under the map</h3>
+        <ul>
+          <li><strong>Step-through trace:</strong> press <em>Play</em> to watch the search unfold, or use the arrows and the slider to move one step at a time. On the map, <span style="color:#2da44e;font-weight:700">green</span> stations are finished, <span style="color:#b7791f;font-weight:700">yellow</span> ones are waiting their turn, and the <span style="color:#cf222e;font-weight:700">red</span> one is being looked at right now. Next to it you can see the queue of waiting stations and a table of the best times found so far. Click any line in the log to jump to that moment.</li>
+          <li><strong>Compare algorithms:</strong> runs all four on your journey and shows how much work each did. The green row has the fastest time. Click a row to trace that algorithm.</li>
+          <li><strong>Graph &amp; data structures:</strong> shows how the network is stored (an adjacency list: each station and the stations it connects to) and explains each algorithm and how fast it is.</li>
+          <li><strong>Spanning tree (Kruskal):</strong> draws the cheapest set of links that still connects every station, in red on the map.</li>
+        </ul>
+
+        <h3>Good to know</h3>
+        <ul>
+          <li>The times and station positions are approximate and for demonstration only. This is not a live timetable.</li>
+          <li>You can reopen this guide any time with <strong>How does this work?</strong>.</li>
+        </ul>
+      </div>
+      <footer>
+        <label><input type="checkbox" id="dontShow"> Don't show this again</label>
+        <button type="button" id="closeBtn">Got it, let's go</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const map = L.map('map').setView([53.3811, -1.4701], 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const $ = (id) => document.getElementById(id);
+    const fromSelect = $('from'), toSelect = $('to'), algoSelect = $('algo'), result = $('result');
+    const routeLayer = L.layerGroup().addTo(map);
+    const mstLayer = L.layerGroup().addTo(map);
+    const stationsById = new Map();
+    const markers = new Map();
+    let algorithms = [], graphData = null, current = null, stepIndex = 0, timer = null;
+
+    const lineColours = { 'Yellow Line': '#d4a017', 'Blue Line': '#1f6feb', 'Purple Line': '#8250df', 'Walking': '#57606a' };
+    const colour = (line) => lineColours[line] || '#0b69a3';
+
+    function el(tag, className, content) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (content !== undefined) node.textContent = content;
+      return node;
+    }
+    const name = (id) => stationsById.get(id)?.name ?? id;
+    const fmt = (n) => Number.isInteger(n) ? n : Number(n).toFixed(2);
+
+    function showError(message) { result.replaceChildren(el('div', 'error', message)); }
+    async function getJson(url) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const problem = await response.json().catch(() => ({}));
+        throw new Error(problem.detail || 'Request failed (' + response.status + ').');
+      }
+      return response.json();
+    }
+
+    document.querySelectorAll('.tabs button').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + btn.dataset.tab));
+      if (btn.dataset.tab === 'mst') showMst(); else mstLayer.clearLayers();
+    }));
+
+    async function init() {
+      try {
+        [graphData, algorithms] = await Promise.all([getJson('/api/graph'), getJson('/api/algorithms')]);
+      } catch (e) { showError(e.message); return; }
+      for (const s of graphData.stations) {
+        stationsById.set(s.id, s);
+        for (const select of [fromSelect, toSelect]) {
+          const option = el('option', '', s.name); option.value = s.id; select.appendChild(option);
+        }
+        markers.set(s.id, L.circleMarker([s.latitude, s.longitude], { radius: 5, weight: 1 }).bindTooltip(s.name).addTo(map));
+      }
+      for (const e of graphData.edges) {
+        const a = stationsById.get(e.fromId), b = stationsById.get(e.toId);
+        L.polyline([[a.latitude, a.longitude], [b.latitude, b.longitude]],
+          { color: '#bcccdc', weight: 2, interactive: false }).addTo(map);
+      }
+      for (const m of markers.values()) m.bringToFront();
+      resetMarkers();
+      for (const a of algorithms) { const o = el('option', '', a.name); o.value = a.id; algoSelect.appendChild(o); }
+      fromSelect.value = 'sheffield-station'; toSelect.value = 'meadowhall';
+      algoSelect.addEventListener('change', showAlgoInfo);
+      showAlgoInfo(); renderStructures();
+      planRoute();
+    }
+
+    function showAlgoInfo() {
+      const a = algorithms.find(x => x.id === algoSelect.value);
+      $('algoInfo').replaceChildren(
+        el('div', '', a.description),
+        el('div', '', 'Structure: ' + a.dataStructure),
+        el('div', '', 'Time ' + a.timeComplexity + ' · Space ' + a.spaceComplexity));
+    }
+
+    function resetMarkers() {
+      for (const m of markers.values()) m.setStyle({ color: '#3e4c59', fillColor: '#9aa5b1', fillOpacity: .8, radius: 5 });
+    }
+
+    async function planRoute() {
+      stopPlay(); routeLayer.clearLayers(); resetMarkers();
+      const q = new URLSearchParams({ from: fromSelect.value, to: toSelect.value });
+      try {
+        const [one, all] = await Promise.all([
+          getJson('/api/routes/analyze?' + q + '&algorithm=' + encodeURIComponent(algoSelect.value)),
+          getJson('/api/routes/compare?' + q)]);
+        current = one; stepIndex = 0;
+        renderRoute(one); renderTrace(); renderCompare(all);
+      } catch (e) { showError(e.message); }
+    }
+
+    function renderRoute(res) {
+      const route = res.route;
+      if (!route) { showError('No route exists between these stations.'); return; }
+      for (const leg of route.legs) {
+        const f = stationsById.get(leg.fromStationId), t = stationsById.get(leg.toStationId);
+        L.polyline([[f.latitude, f.longitude], [t.latitude, t.longitude]], {
+          color: colour(leg.lineName), weight: 6, dashArray: leg.lineName === 'Walking' ? '2 10' : null
+        }).bindTooltip(leg.lineName).addTo(routeLayer);
+      }
+      const points = route.stations.map(s => [s.latitude, s.longitude]);
+      if (points.length > 1) map.fitBounds(points, { padding: [50, 50] }); else map.setView(points[0], 16);
+
+      const nodes = [el('div', 'total', route.totalTravelTimeMinutes + ' min'),
+        el('div', 'leg', res.algorithm.name + ' · ' + route.legs.length + ' hops')];
+      const list = el('ol');
+      route.stations.forEach((s, i) => {
+        const item = el('li', '', s.name);
+        if (i > 0) item.appendChild(el('div', 'leg', route.legs[i - 1].lineName + ' · ' + route.legs[i - 1].travelTimeMinutes + ' min'));
+        list.appendChild(item);
+      });
+      nodes.push(list);
+      for (const t of route.transferInstructions) nodes.push(el('div', 'transfer', t));
+      if (route.legs.length === 0) nodes.push(el('div', '', 'You are already at your destination.'));
+      result.replaceChildren(...nodes);
+    }
+
+    function renderTrace() {
+      const host = $('tab-trace');
+      const trace = current.trace, s = current.stats;
+      const controls = el('div', 'controls');
+      const mk = (label, fn) => { const b = el('button', 'secondary', label); b.addEventListener('click', fn); return b; };
+      const slider = el('input'); slider.type = 'range'; slider.min = 0; slider.max = Math.max(0, trace.length - 1); slider.value = 0; slider.id = 'slider';
+      slider.addEventListener('input', () => { stopPlay(); goTo(+slider.value); });
+      const playBtn = mk('Play', () => timer ? stopPlay() : play()); playBtn.id = 'playBtn';
+      const label = el('span'); label.id = 'stepLabel';
+      controls.append(mk('⏮', () => { stopPlay(); goTo(0); }), mk('◀', () => { stopPlay(); goTo(stepIndex - 1); }),
+        playBtn, mk('▶', () => { stopPlay(); goTo(stepIndex + 1); }), mk('⏭', () => { stopPlay(); goTo(trace.length - 1); }),
+        slider, label);
+
+      const stats = el('div', 'leg',
+        `${s.nodesExpanded} nodes expanded · ${s.edgesExamined} edges examined · ${s.edgesRelaxed} relaxations · ` +
+        `max frontier ${s.maxFrontierSize} · ${s.elapsedMicroseconds} µs` + (s.traceTruncated ? ' · trace truncated' : ''));
+      const legend = el('div', 'legend leg');
+      for (const [c, t] of [['#2da44e', 'settled'], ['#fbbf24', 'frontier'], ['#cf222e', 'current'], ['#d9e2ec', 'tentative'], ['#9aa5b1', 'unseen']]) {
+        const sp = el('span'); const d = el('span', 'dot'); d.style.background = c; sp.append(d, t); legend.appendChild(sp);
+      }
+      const msg = el('div', 'msg'); msg.id = 'stepMsg';
+      const grid = el('div', 'grid');
+      const left = el('div'); left.id = 'traceState';
+      const right = el('div');
+      grid.append(left, right);
+      host.replaceChildren(controls, stats, legend, msg, grid);
+      trace.forEach((st, i) => {
+        const row = el('div', 'trace-row t-' + st.type, `${st.step}. ${st.message}`);
+        row.id = 'row' + i; row.addEventListener('click', () => { stopPlay(); goTo(i); });
+        right.appendChild(row);
+      });
+      goTo(0);
+    }
+
+    function goTo(i) {
+      if (!current || !current.trace.length) return;
+      stepIndex = Math.max(0, Math.min(current.trace.length - 1, i));
+      const trace = current.trace, step = trace[stepIndex];
+      $('slider').value = stepIndex;
+      $('stepLabel').textContent = `${stepIndex + 1}/${trace.length}`;
+      $('stepMsg').textContent = `[${step.type}] ${step.message}`;
+      document.querySelectorAll('.trace-row.cur').forEach(r => r.classList.remove('cur'));
+      const row = $('row' + stepIndex); row.classList.add('cur'); row.scrollIntoView({ block: 'nearest' });
+
+      const settled = new Set();
+      let frontier = [], distances = {};
+      for (let k = 0; k <= stepIndex; k++) {
+        const t = trace[k];
+        if (t.type === 'visit') settled.add(t.stationId);
+        if (Object.keys(t.distances).length) distances = t.distances;
+        if (t.frontier.length || t.type === 'visit' || t.type === 'init') frontier = t.frontier;
+      }
+      // Bellman-Ford distances are only final once the run has finished.
+      if (current.algorithm.id === 'bellman-ford' && step.type === 'found') Object.keys(distances).forEach(id => settled.add(id));
+      resetMarkers();
+      const frontierIds = new Set(frontier.map(f => f.stationId));
+      for (const [id, m] of markers) {
+        if (settled.has(id)) m.setStyle({ fillColor: '#2da44e', radius: 7 });
+        else if (frontierIds.has(id)) m.setStyle({ fillColor: '#fbbf24', radius: 7 });
+        else if (id in distances) m.setStyle({ fillColor: '#d9e2ec', radius: 6 });
+      }
+      if (step.stationId && markers.has(step.stationId)) markers.get(step.stationId).setStyle({ fillColor: '#cf222e', radius: 10 });
+
+      const kind = { dijkstra: 'Priority queue (min-heap), by time', astar: 'Priority queue (min-heap), by g + h',
+        bfs: 'FIFO queue (hops)', 'bellman-ford': 'Edge list (no queue)' }[current.algorithm.id];
+      const state = $('traceState');
+      state.replaceChildren(el('h3', '', 'Frontier: ' + kind));
+      if (!frontier.length) state.appendChild(el('div', 'leg', 'empty / not applicable'));
+      frontier.forEach((f, idx) => state.appendChild(el('span', 'chip' + (idx === 0 ? ' head' : ''), `${name(f.stationId)} (${fmt(f.priority)})`)));
+      state.appendChild(el('h3', '', 'Distance table (best known)'));
+      const table = el('table');
+      const head = el('tr');
+      for (const h of ['Station', current.algorithm.id === 'bfs' ? 'Hops' : 'Minutes', 'Status']) head.appendChild(el('th', '', h));
+      table.appendChild(head);
+      Object.entries(distances).sort((a, b) => a[1] - b[1]).slice(0, 40).forEach(([id, d]) => {
+        const tr = el('tr', id === step.stationId ? 'best' : '');
+        tr.append(el('td', '', name(id)), el('td', '', fmt(d)), el('td', '', settled.has(id) ? 'settled' : frontierIds.has(id) ? 'in frontier' : 'tentative'));
+        table.appendChild(tr);
+      });
+      state.appendChild(table);
+    }
+
+    function play() {
+      $('playBtn').textContent = 'Pause';
+      if (stepIndex >= current.trace.length - 1) goTo(0);
+      timer = setInterval(() => {
+        if (stepIndex >= current.trace.length - 1) { stopPlay(); return; }
+        goTo(stepIndex + 1);
+      }, 350);
+    }
+    function stopPlay() { if (timer) { clearInterval(timer); timer = null; } const b = $('playBtn'); if (b) b.textContent = 'Play'; }
+
+    function renderCompare(all) {
+      const host = $('tab-compare');
+      const times = all.filter(r => r.route).map(r => r.route.totalTravelTimeMinutes);
+      const best = times.length ? Math.min(...times) : null;
+      const table = el('table');
+      const head = el('tr');
+      for (const h of ['Algorithm', 'Data structure', 'Optimises', 'Minutes', 'Hops', 'Expanded', 'Examined', 'Relaxed', 'Max frontier', 'µs', 'Complexity']) head.appendChild(el('th', '', h));
+      table.appendChild(head);
+      for (const r of all) {
+        const tr = el('tr', r.route && r.route.totalTravelTimeMinutes === best ? 'best' : '');
+        const cells = [r.algorithm.name, r.algorithm.dataStructure, r.algorithm.optimises, r.route ? r.route.totalTravelTimeMinutes : '–',
+          r.route ? r.route.legs.length : '–', r.stats.nodesExpanded, r.stats.edgesExamined, r.stats.edgesRelaxed,
+          r.stats.maxFrontierSize, r.stats.elapsedMicroseconds, r.algorithm.timeComplexity];
+        for (const c of cells) tr.appendChild(el('td', '', String(c)));
+        tr.addEventListener('click', () => { algoSelect.value = r.algorithm.id; showAlgoInfo(); planRoute(); });
+        tr.style.cursor = 'pointer'; table.appendChild(tr);
+      }
+      host.replaceChildren(
+        el('div', 'leg', 'Green rows achieve the minimum travel time. BFS minimises stops, so it can be slower in minutes. Click a row to trace it.'), table);
+    }
+
+    function renderStructures() {
+      const host = $('tab-structures');
+      const intro = el('p', '', `The network is a TransitGraph: ${graphData.stations.length} stations (vertices) and ${graphData.edges.length} bidirectional connections stored as an adjacency list: `);
+      intro.appendChild(el('code', '', 'Dictionary<stationId, List<Edge>>'));
+      const grid = el('div', 'grid'); const l = el('div'), r = el('div');
+      l.appendChild(el('h3', '', 'Algorithms & structures'));
+      for (const a of algorithms) {
+        const d = el('details'); d.appendChild(el('summary', '', `${a.name} - ${a.timeComplexity}`));
+        d.append(el('div', '', a.description), el('div', 'leg', 'Structure: ' + a.dataStructure), el('div', 'leg', 'Space: ' + a.spaceComplexity + ' · Optimises: ' + a.optimises));
+        l.appendChild(d);
+      }
+      l.appendChild(el('h3', '', 'Also used'));
+      l.appendChild(el('div', 'leg', 'Hash maps for O(1) station lookup and distance/previous tables; union-find (Kruskal); haversine formula for the A* heuristic; backtracking through the previous-node map to rebuild the path.'));
+      r.appendChild(el('h3', '', 'Adjacency list'));
+      for (const [id, edges] of Object.entries(graphData.adjacencyList)) {
+        const d = el('details'); d.appendChild(el('summary', '', `${name(id)} (${edges.length})`));
+        for (const e of edges) d.appendChild(el('div', 'leg', `→ ${name(e.destinationStationId)} · ${e.travelTimeMinutes} min · ${e.lineName}`));
+        r.appendChild(d);
+      }
+      grid.append(l, r); host.replaceChildren(intro, grid);
+    }
+
+    let mstData = null;
+    async function showMst() {
+      mstLayer.clearLayers();
+      const host = $('tab-mst');
+      try { mstData = mstData || await getJson('/api/network/spanning-tree'); } catch (e) { host.replaceChildren(el('div', 'error', e.message)); return; }
+      for (const e of mstData.edges) {
+        const a = stationsById.get(e.fromId), b = stationsById.get(e.toId);
+        L.polyline([[a.latitude, a.longitude], [b.latitude, b.longitude]], { color: '#cf222e', weight: 4 }).addTo(mstLayer);
+      }
+      const log = el('div');
+      mstData.trace.forEach(t => log.appendChild(el('div', 'trace-row t-' + t.type, `${t.step}. ${t.message}`)));
+      host.replaceChildren(
+        el('div', 'msg', `${mstData.algorithm.name}: ${mstData.edges.length} edges, ${mstData.totalMinutes} total minutes, ${mstData.components} component(s). ${mstData.algorithm.dataStructure}. ${mstData.algorithm.timeComplexity}.`),
+        log);
+    }
+
+    $('plan').addEventListener('click', planRoute);
+    $('swap').addEventListener('click', () => { [fromSelect.value, toSelect.value] = [toSelect.value, fromSelect.value]; planRoute(); });
+    const welcome = $('welcome');
+    const HIDE_KEY = 'routePlannerHideWelcome';
+    let lastFocus = null;
+    function openWelcome() {
+      lastFocus = document.activeElement;
+      welcome.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      $('closeBtn').focus();
+    }
+    function closeWelcome() {
+      try {
+        if ($('dontShow').checked) localStorage.setItem(HIDE_KEY, '1'); else localStorage.removeItem(HIDE_KEY);
+      } catch { /* storage unavailable */ }
+      welcome.classList.remove('open');
+      document.body.style.overflow = '';
+      if (lastFocus) lastFocus.focus();
+    }
+    $('closeX').addEventListener('click', closeWelcome);
+    $('closeBtn').addEventListener('click', closeWelcome);
+    $('helpBtn').addEventListener('click', openWelcome);
+    welcome.addEventListener('click', (e) => { if (e.target === welcome) closeWelcome(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && welcome.classList.contains('open')) closeWelcome(); });
+    let hidden = false;
+    try { hidden = localStorage.getItem(HIDE_KEY) === '1'; } catch { /* ignore */ }
+    if (hidden) $('dontShow').checked = true; else openWelcome();
+
+    init();
+  </script>
+</body>
+</html>

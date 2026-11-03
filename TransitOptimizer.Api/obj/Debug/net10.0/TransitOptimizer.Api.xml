@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TransitOptimizer.Api</name>
+    </assembly>
+    <members>
+        <member name="T:TransitOptimizer.Api.Data.SheffieldTransitData">
+            <summary>
+            Creates the in-memory sample network for Sheffield: Supertram lines plus walking links to
+            nearby landmarks. Coordinates and travel times are approximate, not an official timetable.
+            </summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Data.SheffieldTransitData.CreateGraph">
+            <summary>Builds the Sheffield network.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Domain.Edge">
+            <summary>A weighted connection from one station to another.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.Edge.#ctor(System.String,System.Int32,System.String)">
+            <summary>A weighted connection from one station to another.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Domain.Station">
+            <summary>A transit station or stop in the network.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.Station.#ctor(System.String,System.String,System.Double,System.Double)">
+            <summary>A transit station or stop in the network.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Domain.TransitGraph">
+            <summary>An in-memory transit network represented by an adjacency list.</summary>
+        </member>
+        <member name="P:TransitOptimizer.Api.Domain.TransitGraph.Stations">
+            <summary>Gets all stations in the network.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.TransitGraph.AddStation(TransitOptimizer.Api.Domain.Station)">
+            <summary>Adds a station to the network.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.TransitGraph.AddConnection(System.String,System.String,System.Int32,System.String)">
+            <summary>Adds a bidirectional connection between two existing stations.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.TransitGraph.GetNeighbors(System.String)">
+            <summary>Gets outgoing connections for a station, or an empty list for an unknown ID.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.TransitGraph.GetAllEdges">
+            <summary>Enumerates every directed edge in the adjacency list.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.TransitGraph.ContainsStation(System.String)">
+            <summary>Checks whether the network contains a station ID.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Domain.TransitGraph.TryGetStation(System.String,TransitOptimizer.Api.Domain.Station@)">
+            <summary>Attempts to retrieve a station by ID.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.FrontierEntry">
+            <summary>One entry in a snapshot of the algorithm's frontier (priority queue, queue or edge list).</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.FrontierEntry.#ctor(System.String,System.Double)">
+            <summary>One entry in a snapshot of the algorithm's frontier (priority queue, queue or edge list).</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.TraceStep">
+            <summary>A single recorded step of an algorithm run.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.TraceStep.#ctor(System.Int32,System.String,System.String,System.String,System.Nullable{System.Double},System.String,System.Collections.Generic.IReadOnlyList{TransitOptimizer.Api.Routing.FrontierEntry},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Double})">
+            <summary>A single recorded step of an algorithm run.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.AlgorithmStats">
+            <summary>Performance counters for an algorithm run.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.AlgorithmStats.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Double,System.Boolean)">
+            <summary>Performance counters for an algorithm run.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.AlgorithmInfo">
+            <summary>Static description of an algorithm for display.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.AlgorithmInfo.#ctor(System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Static description of an algorithm for display.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.AlgorithmResult">
+            <summary>The route found by an algorithm plus its full execution trace.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.AlgorithmResult.#ctor(TransitOptimizer.Api.Routing.AlgorithmInfo,TransitOptimizer.Api.Routing.RoutePlan,System.Nullable{System.Int64},System.Collections.Generic.IReadOnlyList{System.String},TransitOptimizer.Api.Routing.AlgorithmStats,System.Collections.Generic.IReadOnlyList{TransitOptimizer.Api.Routing.TraceStep})">
+            <summary>The route found by an algorithm plus its full execution trace.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.GraphEdge">
+            <summary>An undirected connection used for drawing the network.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.GraphEdge.#ctor(System.String,System.String,System.String,System.Int32)">
+            <summary>An undirected connection used for drawing the network.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.SpanningTreeResult">
+            <summary>Result of a minimum spanning tree run (Kruskal + union-find).</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.SpanningTreeResult.#ctor(TransitOptimizer.Api.Routing.AlgorithmInfo,System.Collections.Generic.IReadOnlyList{TransitOptimizer.Api.Routing.GraphEdge},System.Int64,System.Int32,System.Collections.Generic.IReadOnlyList{TransitOptimizer.Api.Routing.TraceStep})">
+            <summary>Result of a minimum spanning tree run (Kruskal + union-find).</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.PathfindingService">
+            <summary>
+            Runs several shortest-path algorithms over the transit graph and records a step-by-step trace
+            of each so the behaviour of the underlying data structures can be visualised.
+            </summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.PathfindingService.#ctor(TransitOptimizer.Api.Domain.TransitGraph)">
+            <summary>Creates the service and derives the A* heuristic scale from the graph.</summary>
+        </member>
+        <member name="P:TransitOptimizer.Api.Routing.PathfindingService.Catalog">
+            <summary>Metadata for every supported algorithm.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.PathfindingService.FindInfo(System.String)">
+            <summary>Looks up algorithm metadata by ID.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.PathfindingService.Run(System.String,System.String,System.String)">
+            <summary>Runs one algorithm. Returns null for an unknown algorithm or station.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.PathfindingService.RunAll(System.String,System.String)">
+            <summary>Runs every algorithm for the same query.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.PathfindingService.MinimumSpanningTree">
+            <summary>Builds a minimum spanning forest with Kruskal's algorithm and union-find.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.RouteFinderService">
+            <summary>Finds fastest routes in a transit graph using Dijkstra's algorithm.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.RouteFinderService.#ctor(TransitOptimizer.Api.Domain.TransitGraph)">
+            <summary>Finds fastest routes in a transit graph using Dijkstra's algorithm.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.RouteFinderService.FindRoute(System.String,System.String)">
+            <summary>Finds the shortest-time route, or null when either station is missing or unreachable.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.RoutePlan">
+            <summary>A shortest-time route and the instructions needed to follow it.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.RoutePlan.#ctor(System.String,System.String,System.Int64,System.Collections.Generic.IReadOnlyList{TransitOptimizer.Api.Domain.Station},System.Collections.Generic.IReadOnlyList{TransitOptimizer.Api.Routing.RouteLeg},System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>A shortest-time route and the instructions needed to follow it.</summary>
+        </member>
+        <member name="T:TransitOptimizer.Api.Routing.RouteLeg">
+            <summary>A connection used by a route.</summary>
+        </member>
+        <member name="M:TransitOptimizer.Api.Routing.RouteLeg.#ctor(System.String,System.String,System.String,System.Int32)">
+            <summary>A connection used by a route.</summary>
+        </member>
+        <member name="T:Program">
+            <summary>Entry point marker so integration tests can host the app.</summary>
+        </member>
+    </members>
+</doc>

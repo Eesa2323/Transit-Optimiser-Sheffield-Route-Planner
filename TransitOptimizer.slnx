@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TransitOptimizer.Api.Tests/TransitOptimizer.Api.Tests.csproj" />
+  <Project Path="TransitOptimizer.Api/TransitOptimizer.Api.csproj" />
+</Solution>

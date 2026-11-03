@@ -1,0 +1,16 @@
+@TransitOptimizer.Api_HostAddress = http://localhost:5094
+
+GET {{TransitOptimizer.Api_HostAddress}}/api/stations
+Accept: application/json
+
+###
+
+GET {{TransitOptimizer.Api_HostAddress}}/api/routes/plan?from=sheffield-station&to=meadowhall
+Accept: application/json
+
+###
+
+GET {{TransitOptimizer.Api_HostAddress}}/api/routes/plan?from=unknown-station&to=piccadilly-station
+Accept: application/json
+
+###
