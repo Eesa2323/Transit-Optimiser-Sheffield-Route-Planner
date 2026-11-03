@@ -1,8 +1,8 @@
-# Transit Optimizer – Sheffield Route Planner
+# Transit Optimiser – Sheffield Route Planner
 
 **Find the fastest way across Sheffield, then watch the computer work it out step by step.**
 
-Transit Optimizer is a route planner for a model of Sheffield's Supertram network plus walking links. Pick two stations and it shows the quickest journey on a map. The point of the project is to make the algorithms behind a route planner visible: you can replay each search, see the data structures change, and compare four algorithms on the same trip.
+Transit Optimiser is a route planner for a model of Sheffield's tram network plus walking links. Pick two stations and it shows the quickest journey on a map. The point of the project is to make the algorithms behind a route planner visible: you can replay each search, see the data structures change, and compare four algorithms on the same trip.
 
 > The stations, coordinates and journey times are approximate sample data for demonstration. This is not a live timetable.
 
