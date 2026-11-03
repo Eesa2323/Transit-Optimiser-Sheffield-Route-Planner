@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+publish/
+
+# Visual Studio / VS Code / Rider
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Test and coverage output
+TestResults/
+coverage/
+*.coverage
+*.trx
+
+# Local config and secrets
+appsettings.Local.json
+*.pfx
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
