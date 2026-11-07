@@ -36,5 +36,5 @@ C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\obj\Debug\net10.0\Trans
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\obj\Debug\net10.0\TransitOptimizer.Api.genruntimeconfig.cache
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\obj\Debug\net10.0\ref\TransitOptimizer.Api.dll
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\bin\Debug\net10.0\TransitOptimizer.Api.staticwebassets.runtime.json
-C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\obj\Debug\net10.0\compressed\c2jmslny12-{0}-b5fmtrszje-b5fmtrszje.gz
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\obj\Debug\net10.0\TransitOptimizer.Api.sourcelink.json
+C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api\obj\Debug\net10.0\compressed\c2jmslny12-{0}-mcs8jq2313-mcs8jq2313.gz

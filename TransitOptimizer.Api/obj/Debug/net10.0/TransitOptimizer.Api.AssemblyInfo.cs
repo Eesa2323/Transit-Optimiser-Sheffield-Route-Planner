@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TransitOptimizer.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+555d68deaf31a0677aee828c966f193a2583e59b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e8171ef266cb545e81afc915a80a85fdc0168bbf")]
 [assembly: System.Reflection.AssemblyProductAttribute("TransitOptimizer.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TransitOptimizer.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

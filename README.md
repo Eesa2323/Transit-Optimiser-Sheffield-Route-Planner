@@ -1,8 +1,8 @@
 # Transit Optimiser – Sheffield Route Planner
 
-**Find the fastest way across Sheffield, then watch the computer work it out step by step.**
+**Explore routes across Sheffield, then watch the computer work them out step by step.**
 
-Transit Optimiser is a route planner for a model of Sheffield's tram network plus walking links. Pick two stations and it shows the quickest journey on a map. The point of the project is to make the algorithms behind a route planner visible: you can replay each search, see the data structures change, and compare four algorithms on the same trip.
+Transit Optimiser is a route planner for a model of Sheffield's tram network plus walking links. Pick two stations and an algorithm to see a journey on a map. Dijkstra, A\* and Bellman-Ford find a fastest route; breadth-first search finds a route with the fewest stops, which may take longer. You can replay each search, see the data structures change, and compare four algorithms on the same trip.
 
 > The stations, coordinates and journey times are approximate sample data for demonstration. This is not a live timetable.
 
@@ -10,7 +10,7 @@ Transit Optimiser is a route planner for a model of Sheffield's tram network plu
 
 ## What you can do
 
-- **Plan a route** between any two of 47 stations. You get the total time, each leg, and where to change lines.
+- **Plan a route** between any two of 43 stations. You get the total time, each leg, and where to change lines.
 - **Watch an algorithm think.** Play, pause, step or scrub through every decision. Stations on the map change colour as the search progresses, alongside the live queue and a table of best-known times.
 - **Compare algorithms.** Run all four on the same journey and see how much work each one did.
 - **Explore the graph.** Browse the adjacency list the network is stored in.
@@ -31,7 +31,7 @@ Also used: hash maps for fast lookups, the haversine formula for the A\* estimat
 
 ## Quick start
 
-All you need is the [.NET 10 SDK](https://dotnet.microsoft.com/download). Docker is **not** required.
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/download). Docker is **not** required. Run these commands from the repository root:
 
 ```powershell
 dotnet test TransitOptimizer.slnx
@@ -39,10 +39,11 @@ dotnet run --project TransitOptimizer.Api --launch-profile http
 ```
 
 Then open <http://localhost:5094>. Swagger (interactive API docs) is at <http://localhost:5094/swagger>.
+Leave the server running while using the app; press `Ctrl+C` in its terminal to stop it. The first run restores NuGet packages. The map also needs internet access to load Leaflet and OpenStreetMap tiles.
 
 ### Using the app
 
-1. Choose **From** and **To** stations and an **Algorithm**, then press **Plan route & trace**.
+1. Choose **From** and **To** stations and an **Algorithm**, then press **Plan route & trace**. Press it again after changing a selection; **Swap stations** also recalculates the route.
 2. In the **Step-through trace** tab, press **Play** or use the arrows and slider. Green stations are finished, yellow are waiting in the queue, red is the one being examined. Click any line in the log to jump to that step.
 3. Open **Compare algorithms** to see nodes expanded, edges examined and timings side by side. Click a row to trace that algorithm.
 4. Open **Graph & data structures** and **Spanning tree (Kruskal)** to explore the rest.
@@ -56,7 +57,7 @@ docker build -t transit-optimizer .
 docker run -p 8080:8080 transit-optimizer
 ```
 
-Open <http://localhost:8080>. The container listens on port 8080 (change it with `ASPNETCORE_URLS`), respects `X-Forwarded-*` headers from a reverse proxy, and exposes `/health`, so it suits hosts such as Azure Container Apps, Render or Fly.io. Swagger is available in every environment.
+Open <http://localhost:8080>. The container listens on port 8080 (change it with `ASPNETCORE_URLS`) and exposes `/health`. Swagger is available in every environment. The app accepts forwarded headers without restricting known proxies, so only expose it behind a trusted proxy that overwrites incoming forwarded headers.
 
 ## API
 
@@ -66,20 +67,23 @@ Open <http://localhost:8080>. The container listens on port 8080 (change it with
 | `GET /api/graph`                                            | Stations, edges and the raw adjacency list                                                          |
 | `GET /api/algorithms`                                       | Algorithm names, data structures and complexity                                                     |
 | `GET /api/routes/plan?from=sheffield-station&to=meadowhall` | Fastest route (Dijkstra) with legs and transfer instructions                                        |
-| `GET /api/routes/analyze?from=..&to=..&algorithm=dijkstra`  | One algorithm's route, stats and full trace. Algorithms: `dijkstra`, `astar`, `bfs`, `bellman-ford` |
+| `GET /api/routes/analyze?from=..&to=..&algorithm=dijkstra`  | One algorithm's route, stats and trace. Algorithms: `dijkstra`, `astar`, `bfs`, `bellman-ford`      |
 | `GET /api/routes/compare?from=..&to=..`                     | All four algorithms on the same journey                                                             |
 | `GET /api/network/spanning-tree`                            | Kruskal's minimum spanning tree with trace                                                          |
 | `GET /health`                                               | Health check                                                                                        |
+| `GET /cron-ping`                                            | Simple `200 OK` ping response                                                                       |
 
-Errors: `400 Bad Request` for a missing parameter or unknown algorithm, `404 Not Found` for an unknown station or when no route exists.
+Route endpoints require `from` and `to` station IDs, which can be obtained from `/api/stations`. The `algorithm` parameter on `/api/routes/analyze` defaults to `dijkstra` when omitted.
+
+Errors: route endpoints return `400 Bad Request` for a missing parameter, or for an unknown algorithm on `/api/routes/analyze`, and `404 Not Found` for an unknown station. `/api/routes/plan` also returns `404` when no route exists; `/api/routes/analyze` and `/api/routes/compare` instead return results with a null `route` for disconnected stations.
 
 Example:
 
 ```powershell
-curl "http://localhost:5094/api/routes/analyze?from=sheffield-station&to=meadowhall&algorithm=astar"
+Invoke-RestMethod "http://localhost:5094/api/routes/analyze?from=sheffield-station&to=meadowhall&algorithm=astar"
 ```
 
-Each trace step records its type (`init`, `visit`, `relax`, `found`, ...), a readable message, the current frontier and the distance table.
+Each trace step records its type (`init`, `visit`, `relax`, `found`, ...), a readable message, a frontier snapshot and the distance table. Route traces are capped at 1,500 steps; `stats.traceTruncated` indicates whether steps were omitted. Queue snapshots contain at most eight entries.
 
 ## Project layout
 
@@ -98,8 +102,10 @@ The graph and services are registered as singletons and loaded once at startup, 
 
 ## Testing
 
-`dotnet test TransitOptimizer.slnx` runs the unit and integration tests. They cover same-station and disconnected routes, picking the shortest of several paths, agreement between Dijkstra, A\* and Bellman-Ford across the network, BFS minimising stops, the spanning tree, and the API's 400/404 responses and traces.
+`dotnet test TransitOptimizer.slnx` runs the xUnit unit and API integration tests. They cover same-station and disconnected routes, picking the shortest of several paths, agreement between Dijkstra, A\* and Bellman-Ford for the first 12 origin stations against every destination, BFS minimising stops, the spanning tree, and the API's 400/404 responses and traces. The tests do not automate the browser UI.
+
+Keep the `TransitOptimizer.Api.Tests` project and its source files in Git. Its generated `bin`, `obj`, test results and coverage output are covered by `.gitignore`; ignore rules do not untrack files that Git already tracks.
 
 ## Adding your own network
 
-Edit `Data/SheffieldTransitData.cs`: add `Station` entries (id, name, latitude, longitude) and connect them with `Link(graph, line, minutes, fromId, toId)`. Add a colour for any new line name in the `lineColours` map in `wwwroot/index.html`.
+Edit `TransitOptimizer.Api/Data/SheffieldTransitData.cs`: add `Station` entries (id, name, latitude, longitude) and connect them with `Link(graph, line, minutes, fromId, toId)`. Connections are bidirectional and require non-negative travel times. Optionally add a colour for any new line name in the `lineColours` map in `TransitOptimizer.Api/wwwroot/index.html`; unrecognised lines use a default colour.

@@ -308,6 +308,7 @@
         row.id = 'row' + i; row.addEventListener('click', () => { stopPlay(); goTo(i); });
         right.appendChild(row);
       });
+      host.scrollTop = 0;
       goTo(0);
     }
 
@@ -319,7 +320,7 @@
       $('stepLabel').textContent = `${stepIndex + 1}/${trace.length}`;
       $('stepMsg').textContent = `[${step.type}] ${step.message}`;
       document.querySelectorAll('.trace-row.cur').forEach(r => r.classList.remove('cur'));
-      const row = $('row' + stepIndex); row.classList.add('cur'); row.scrollIntoView({ block: 'nearest' });
+      const row = $('row' + stepIndex); row.classList.add('cur');
 
       const settled = new Set();
       let frontier = [], distances = {};
