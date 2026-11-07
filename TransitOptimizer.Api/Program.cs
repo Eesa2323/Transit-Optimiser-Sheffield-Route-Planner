@@ -38,6 +38,7 @@ if (app.Environment.IsDevelopment())
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapHealthChecks("/health");
+app.MapGet("/cron-ping", () => Results.Ok("OK"));
 
 app.MapGet("/api/algorithms", () => Results.Ok(PathfindingService.Catalog))
     .WithTags("Algorithms")

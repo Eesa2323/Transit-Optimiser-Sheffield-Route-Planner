@@ -77,6 +77,7 @@ public sealed class ApiEndpointTests(WebApplicationFactory<Program> factory) : I
         using var algorithms = await GetJson("/api/algorithms");
         Assert.Equal(4, algorithms.RootElement.GetArrayLength());
         Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync("/health")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync("/cron-ping")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync("/swagger/v1/swagger.json")).StatusCode);
     }
 

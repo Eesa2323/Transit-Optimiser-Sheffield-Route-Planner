@@ -422,3 +422,4 @@ C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api.Tests\bin\Debug\net10.0
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api.Tests\bin\Debug\net10.0\Microsoft.AspNetCore.TestHost.dll
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api.Tests\bin\Debug\net10.0\Microsoft.Extensions.DependencyModel.dll
 C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api.Tests\obj\Debug\net10.0\MvcTestingAppManifest.json
+C:\Users\Eesa\Desktop\route-planner\TransitOptimizer.Api.Tests\obj\Debug\net10.0\TransitOptimizer.Api.Tests.sourcelink.json
